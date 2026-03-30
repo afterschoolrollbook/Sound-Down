@@ -314,7 +314,7 @@ export default function Home() {
     <>
       <Head>
         <title>{t.metaTitle}</title>
-        <meta name="google-site-verification" content="SOUND_DOWN_SEARCH_CONSOLE_CODE" />
+        <meta name="google-site-verification" content="lK8Mtu1lvI0E7LFcno3GVFa6s10Ur4MRa8Xlzt6BQak" />
         <meta name="google-adsense-account" content="ca-pub-2161169464776476" />
         <meta name="description" content={t.metaDesc} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
