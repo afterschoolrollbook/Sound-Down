@@ -12,6 +12,16 @@ const DEFAULTS = {
   cooldown: 12,
   adsOn: true,
   thumbDownBanner: false,
+  affiliateLinks: {
+    tubebuddy:     'https://www.tubebuddy.com/pricing?a=YOUR_ID',
+    canva:         'https://partner.canva.com/YOUR_ID',
+    envato:        'https://elements.envato.com/?ref=YOUR_ID',
+    vidiq:         'https://vidiq.com/#_YOUR_ID',
+    epidemicSound: 'https://www.epidemicsound.com/?utm_source=affiliate&utm_medium=YOUR_ID',
+  },
+  affiliateEnabled: {
+    tubebuddy: true, canva: true, envato: true, vidiq: true, epidemicSound: false,
+  },
 }
 
 export default async function handler(req, res) {
@@ -30,9 +40,11 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json({
-      cooldown:        map['site:cooldown']           ?? DEFAULTS.cooldown,
-      adsOn:           map['site:ads_on']             ?? DEFAULTS.adsOn,
-      thumbDownBanner: map['site:thumb_down_banner']  ?? DEFAULTS.thumbDownBanner,
+      cooldown:         map['site:cooldown']          ?? DEFAULTS.cooldown,
+      adsOn:            map['site:ads_on']            ?? DEFAULTS.adsOn,
+      thumbDownBanner:  map['site:thumb_down_banner'] ?? DEFAULTS.thumbDownBanner,
+      affiliateLinks:   map['affiliate:links']        ?? DEFAULTS.affiliateLinks,
+      affiliateEnabled: map['affiliate:enabled']      ?? DEFAULTS.affiliateEnabled,
     })
   } catch (err) {
     console.error('Supabase get error:', err)
