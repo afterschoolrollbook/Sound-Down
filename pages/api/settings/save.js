@@ -1,5 +1,5 @@
 // pages/api/settings/save.js
-// Supabase에 설정값 저장 (upsert)
+// Supabase에 설정값 저장 (sounddown_settings 테이블)
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -20,16 +20,16 @@ export default async function handler(req, res) {
 
   try {
     const rows = []
-    if (cooldown !== undefined)          rows.push({ key: 'site:cooldown',           value: cooldown })
-    if (adsOn !== undefined)             rows.push({ key: 'site:ads_on',             value: adsOn })
-    if (thumbDownBanner !== undefined)   rows.push({ key: 'site:thumb_down_banner',  value: thumbDownBanner })
-    if (affiliateLinks !== undefined)    rows.push({ key: 'affiliate:links',          value: affiliateLinks })
-    if (affiliateEnabled !== undefined)  rows.push({ key: 'affiliate:enabled',        value: affiliateEnabled })
+    if (cooldown !== undefined)         rows.push({ key: 'site:cooldown',           value: cooldown })
+    if (adsOn !== undefined)            rows.push({ key: 'site:ads_on',             value: adsOn })
+    if (thumbDownBanner !== undefined)  rows.push({ key: 'site:thumb_down_banner',  value: thumbDownBanner })
+    if (affiliateLinks !== undefined)   rows.push({ key: 'affiliate:links',          value: affiliateLinks })
+    if (affiliateEnabled !== undefined) rows.push({ key: 'affiliate:enabled',        value: affiliateEnabled })
 
     if (rows.length === 0) return res.status(400).json({ error: '저장할 데이터 없음' })
 
     const { error } = await supabase
-      .from('settings')
+      .from('sounddown_settings')
       .upsert(rows, { onConflict: 'key' })
 
     if (error) throw error

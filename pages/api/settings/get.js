@@ -1,5 +1,5 @@
 // pages/api/settings/get.js
-// Supabase에서 설정값 읽기
+// Supabase에서 설정값 읽기 (sounddown_settings 테이블)
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 
   try {
     const { data, error } = await supabase
-      .from('settings')
+      .from('sounddown_settings')
       .select('key, value')
 
     if (error) throw error
