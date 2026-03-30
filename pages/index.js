@@ -169,6 +169,8 @@ export default function Home() {
   const [cooldown, setCooldown] = useState(0)
   const [maxCooldown, setMaxCooldown] = useState(12)
   const [showCooldownAd, setShowCooldownAd] = useState(false)
+  const [adsOn, setAdsOn] = useState(true)
+  const [thumbDownBanner, setThumbDownBanner] = useState(false)
   const audioRef = useRef(null)
 
   const t = LANGS[lang]
@@ -185,6 +187,15 @@ export default function Home() {
       const rem = Math.ceil((parseInt(end) - Date.now()) / 1000)
       if (rem > 0) { setCooldown(rem); setShowCooldownAd(true) }
     }
+    // Supabase에서 설정 불러오기
+    fetch('/api/settings/get')
+      .then(r => r.json())
+      .then(data => {
+        if (data.cooldown) setMaxCooldown(data.cooldown)
+        if (data.adsOn !== undefined) setAdsOn(data.adsOn)
+        if (data.thumbDownBanner !== undefined) setThumbDownBanner(data.thumbDownBanner)
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -272,6 +283,8 @@ export default function Home() {
     <>
       <Head>
         <title>{t.metaTitle}</title>
+        <meta name="google-site-verification" content="SOUND_DOWN_SEARCH_CONSOLE_CODE" />
+        <meta name="google-adsense-account" content="ca-pub-2161169464776476" />
         <meta name="description" content={t.metaDesc} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta property="og:title" content={t.metaTitle} />
@@ -299,16 +312,35 @@ export default function Home() {
             <div className="logo-icon">🎵</div>
             <span className="logo-text">Sound<span>-Down</span></span>
           </a>
-          <button className="lang-btn" onClick={toggleLang}>
-            {lang === 'ko' ? '🇺🇸 English' : '🇰🇷 한국어'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {thumbDownBanner && (
+              <a
+                href="https://www.thumb-down.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: '#1a0d0d', border: '1px solid #4a1a1a',
+                  borderRadius: 8, padding: '6px 12px',
+                  color: '#ff8888', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                }}
+              >
+                🖼️ Thumb-Down
+              </a>
+            )}
+            <button className="lang-btn" onClick={toggleLang}>
+              {lang === 'ko' ? '🇺🇸 English' : '🇰🇷 한국어'}
+            </button>
+          </div>
         </div>
       </header>
 
       {/* 상단 광고 */}
-      <div className="wrap" style={{ marginTop: 24 }}>
-        <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_TOP || '1111111111'} label={t.adLabel} />
-      </div>
+      {adsOn && (
+        <div className="wrap" style={{ marginTop: 24 }}>
+          <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_TOP || '1111111111'} label={t.adLabel} />
+        </div>
+      )}
 
       <main className="wrap">
         {/* ── HERO ── */}
@@ -375,7 +407,9 @@ export default function Home() {
                 <p>{t.cooldownSub}</p>
               </div>
             </div>
-            <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_COOLDOWN || '2222222222'} tall label={t.adLabel} />
+            {adsOn && (
+              <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_COOLDOWN || '2222222222'} tall label={t.adLabel} />
+            )}
           </div>
         )}
 
@@ -423,22 +457,36 @@ export default function Home() {
         )}
 
         {/* 결과 하단 광고 */}
-        {sounds.length > 0 && (
+        {sounds.length > 0 && adsOn && (
           <div style={{ marginTop: 32 }}>
             <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_MIDDLE || '3333333333'} label={t.adLabel} />
           </div>
         )}
 
         {/* ── 크로스 프로모션 ── */}
-        <div className="cross-promo">
-          <div className="cross-promo-text">
-            <strong>🖼️ {t.crossTitle}</strong>
-            {t.crossDesc}
-          </div>
-          <a href="https://thumb-down.com" className="cross-link" target="_blank" rel="noopener noreferrer">
-            {t.crossLink}
+        {thumbDownBanner && (
+          <a href="https://www.thumb-down.com" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #1a0505 0%, #2d0a0a 100%)',
+              border: '1px solid #4a1a1a', borderRadius: 14,
+              padding: '20px 28px', display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between', gap: 16, marginTop: 32, cursor: 'pointer',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <span style={{ fontSize: 36 }}>🖼️</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: '#ff8888', marginBottom: 4 }}>Thumb-Down</div>
+                  <div style={{ color: '#884444', fontSize: 13 }}>
+                    {lang === 'ko' ? '유튜브 썸네일 무료 다운로드 — 모든 해상도 지원' : 'Free YouTube Thumbnail Downloader — All resolutions'}
+                  </div>
+                </div>
+              </div>
+              <div style={{ background: '#8b0000', color: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                {lang === 'ko' ? '바로가기 →' : 'Visit →'}
+              </div>
+            </div>
           </a>
-        </div>
+        )}
 
         {/* ── 사용 방법 ── */}
         <section className="how-section">
@@ -457,7 +505,9 @@ export default function Home() {
       {/* ── FOOTER ── */}
       <footer className="footer">
         <div className="wrap">
-          <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_FOOTER || '4444444444'} label={t.adLabel} />
+          {adsOn && (
+            <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_FOOTER || '4444444444'} label={t.adLabel} />
+          )}
           <p className="footer-text">{t.footer}</p>
           <a href="/admin" className="admin-link">admin</a>
         </div>
