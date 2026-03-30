@@ -157,6 +157,37 @@ function AdSlot({ slot, tall = false, label = '광고' }) {
   )
 }
 
+// ─── 사이드바 광고 (PC 전용) ─────────────────────────
+function SidebarAd({ slot, label = '광고' }) {
+  const ref = useRef(null)
+  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
+  useEffect(() => {
+    if (!client || !ref.current) return
+    try { ;(window.adsbygoogle = window.adsbygoogle || []).push({}) } catch {}
+  }, [client])
+  if (!client) {
+    return (
+      <div className="sidebar-ad-placeholder">
+        <span style={{ fontSize: 18 }}>📢</span>
+        <span style={{ fontSize: 12, color: '#223344', marginTop: 6 }}>{label}</span>
+        <span style={{ fontSize: 10, color: '#1a2a3a', marginTop: 4, textAlign: 'center' }}>160×600</span>
+      </div>
+    )
+  }
+  return (
+    <div className="sidebar-ad-wrap">
+      <p className="ad-tag">{label}</p>
+      <ins ref={ref} className="adsbygoogle"
+        style={{ display: 'block', width: '160px', height: '600px' }}
+        data-ad-client={client}
+        data-ad-slot={slot}
+        data-ad-format="vertical"
+        data-full-width-responsive="false"
+      />
+    </div>
+  )
+}
+
 // ─── 메인 컴포넌트 ───────────────────────────────────
 export default function Home() {
   const [lang, setLang] = useState('ko')
@@ -342,7 +373,17 @@ export default function Home() {
         </div>
       )}
 
-      <main className="wrap">
+      {/* ===== 좌우 사이드바 + 메인 레이아웃 ===== */}
+      <div className="page-layout">
+
+        {/* 왼쪽 사이드바 */}
+        {adsOn && (
+          <aside className="sidebar">
+            <SidebarAd slot={process.env.NEXT_PUBLIC_AD_SLOT_LEFT || '5555555555'} label={t.adLabel} />
+          </aside>
+        )}
+
+      <main className="wrap main-content">
         {/* ── HERO ── */}
         <section className="hero">
           <div className="hero-badge">{t.badge}</div>
@@ -501,6 +542,15 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+        {/* 오른쪽 사이드바 */}
+        {adsOn && (
+          <aside className="sidebar">
+            <SidebarAd slot={process.env.NEXT_PUBLIC_AD_SLOT_RIGHT || '6666666666'} label={t.adLabel} />
+          </aside>
+        )}
+
+      </div>
 
       {/* ── FOOTER ── */}
       <footer className="footer">
