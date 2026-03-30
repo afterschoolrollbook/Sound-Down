@@ -1,16 +1,41 @@
 // pages/api/settings/get.js
-// DB 없이 환경변수 기반으로 동작 — 별도 설정 불필요!
+// Supabase에서 설정값 읽기
 
-export default function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+import { createClient } from '@supabase/supabase-js'
 
-  // 런타임 설정은 메모리에서 관리 (서버 재시작 시 초기화됨)
-  // 영구 저장이 필요하면 Vercel KV 연동 가능
-  const settings = global._sounddownSettings || {
-    cooldown: parseInt(process.env.DEFAULT_COOLDOWN || '12'),
-    adsOn: true,
-    thumbDownBanner: false,
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
+const DEFAULTS = {
+  cooldown: 12,
+  adsOn: true,
+  thumbDownBanner: false,
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'GET') return res.status(405).end()
+
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('key, value')
+
+    if (error) throw error
+
+    const map = {}
+    for (const row of data || []) {
+      map[row.key] = row.value
+    }
+
+    res.status(200).json({
+      cooldown:        map['site:cooldown']           ?? DEFAULTS.cooldown,
+      adsOn:           map['site:ads_on']             ?? DEFAULTS.adsOn,
+      thumbDownBanner: map['site:thumb_down_banner']  ?? DEFAULTS.thumbDownBanner,
+    })
+  } catch (err) {
+    console.error('Supabase get error:', err)
+    res.status(500).json({ error: 'DB 읽기 실패' })
   }
-
-  return res.status(200).json(settings)
 }
