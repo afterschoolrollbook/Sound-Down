@@ -171,7 +171,7 @@ export default function Faq() {
                 </div>
                 {open === i && <div className="faq-a">{a}</div>}
               </div>
-            )))}
+            ))}
           </div>
 
           <div className="contact-box">
