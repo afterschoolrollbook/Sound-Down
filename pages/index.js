@@ -559,6 +559,11 @@ export default function Home() {
             <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_FOOTER || '4444444444'} label={t.adLabel} />
           )}
           <p className="footer-text">{t.footer}</p>
+          <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 12 }}>
+            <a href="/privacy" style={{ color: '#445566', fontSize: 12, textDecoration: 'none' }}>개인정보처리방침</a>
+            <a href="/terms" style={{ color: '#445566', fontSize: 12, textDecoration: 'none' }}>이용약관</a>
+            <a href="/faq" style={{ color: '#445566', fontSize: 12, textDecoration: 'none' }}>FAQ</a>
+          </div>
           <a href="/admin" className="admin-link">admin</a>
         </div>
       </footer>
