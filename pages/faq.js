@@ -159,7 +159,7 @@ export default function Faq() {
           <p style={{ color: 'var(--text2)', fontSize: 15, marginBottom: 48 }}>{t.sub}</p>
 
           <div className="faq-list">
-            {faqs.map(({ q, a }, i => (
+            {faqs.map(({ q, a }, i) => (
               <div
                 key={i}
                 className={`faq-item${open === i ? ' open' : ''}`}
