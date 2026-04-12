@@ -203,6 +203,84 @@ export default function Admin() {
   })
   const [affiliateSaved, setAffiliateSaved] = useState(false)
 
+
+  // 블로그 글쓰기
+  const [blogTab, setBlogTab] = useState('write')
+  const [blogPosts, setBlogPosts] = useState([])
+  const [blogLoading, setBlogLoading] = useState(false)
+  const [blogSaved, setBlogSaved] = useState(false)
+  const [blogError, setBlogError] = useState('')
+  const [editingPost, setEditingPost] = useState(null)
+  const [blogForm, setBlogForm] = useState({
+    slug: '', title_ko: '', title_en: '',
+    content_ko: '', content_en: '',
+    description_ko: '', description_en: '',
+    tags: '', published: true,
+  })
+
+  const fetchBlogPosts = async () => {
+    setBlogLoading(true)
+    try {
+      const res = await fetch('/api/blog/posts')
+      const data = await res.json()
+      setBlogPosts(Array.isArray(data) ? data : [])
+    } catch {}
+    setBlogLoading(false)
+  }
+
+  const handleBlogSubmit = async () => {
+    if (!blogForm.slug || !blogForm.title_ko || !blogForm.content_ko) {
+      setBlogError('슬러그, 제목(한국어), 내용(한국어)은 필수입니다.')
+      setTimeout(() => setBlogError(''), 3000)
+      return
+    }
+    setBlogLoading(true)
+    try {
+      const body = {
+        ...blogForm,
+        tags: blogForm.tags ? blogForm.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      }
+      const method = editingPost ? 'PUT' : 'POST'
+      if (editingPost) body.id = editingPost.id
+      const res = await fetch('/api/blog/posts', {
+        method,
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error()
+      setBlogSaved(true)
+      setTimeout(() => setBlogSaved(false), 2500)
+      setBlogForm({ slug:'', title_ko:'', title_en:'', content_ko:'', content_en:'', description_ko:'', description_en:'', tags:'', published:true })
+      setEditingPost(null)
+      fetchBlogPosts()
+    } catch {
+      setBlogError('저장 실패. 다시 시도해주세요.')
+      setTimeout(() => setBlogError(''), 3000)
+    }
+    setBlogLoading(false)
+  }
+
+  const handleBlogDelete = async (id) => {
+    if (!confirm('삭제할까요?')) return
+    await fetch('/api/blog/posts', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+      body: JSON.stringify({ id }),
+    })
+    fetchBlogPosts()
+  }
+
+  const handleBlogEdit = (post) => {
+    setEditingPost(post)
+    setBlogForm({
+      slug: post.slug, title_ko: post.title_ko || '', title_en: post.title_en || '',
+      content_ko: post.content_ko || '', content_en: post.content_en || '',
+      description_ko: post.description_ko || '', description_en: post.description_en || '',
+      tags: post.tags ? post.tags.join(', ') : '', published: post.published,
+    })
+    setBlogTab('write')
+  }
+
   // 비밀번호 변경
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -488,7 +566,119 @@ export default function Admin() {
             </button>
           </div>
 
-          {/* ===== 섹션 5: 비밀번호 변경 ===== */}
+          {/* ===== 섹션 5: 블로그 글쓰기 ===== */}
+          <div style={S.card}>
+            <h2 style={{ ...S.cardTitle, justifyContent: 'space-between' }}>
+              <span>✍️ 블로그 글 관리</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => { setBlogTab("write"); setEditingPost(null); setBlogForm({ slug:"",title_ko:"",title_en:"",content_ko:"",content_en:"",description_ko:"",description_en:"",tags:"",published:true }) }}
+                  style={{ ...S.btn(blogTab === "write" ? "#00d4aa" : "#1e2830"), padding: "7px 16px", fontSize: 13 }}>✏️ 글쓰기</button>
+                <button onClick={() => { setBlogTab("list"); fetchBlogPosts() }}
+                  style={{ ...S.btn(blogTab === "list" ? "#00d4aa" : "#1e2830"), padding: "7px 16px", fontSize: 13 }}>📋 글 목록</button>
+              </div>
+            </h2>
+            {blogTab === "write" && (
+              <div>
+                {editingPost && (
+                  <div style={{ background: "#0d1f1a", border: "1px solid #1a4a3a", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#00d4aa" }}>
+                    ✏️ 수정 중: <strong>{editingPost.title_ko}</strong>
+                  </div>
+                )}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ color: "#8899aa", fontSize: 12, display: "block", marginBottom: 4 }}>슬러그 * (URL: /blog/슬러그)</label>
+                    <input value={blogForm.slug} onChange={e => setBlogForm(p => ({...p, slug: e.target.value.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"")}))}
+                      placeholder="free-sound-effects-for-youtube" style={S.input} />
+                  </div>
+                  <div>
+                    <label style={{ color: "#8899aa", fontSize: 12, display: "block", marginBottom: 4 }}>태그 (쉼표로 구분)</label>
+                    <input value={blogForm.tags} onChange={e => setBlogForm(p => ({...p, tags: e.target.value}))}
+                      placeholder="효과음, 유튜브, CC0" style={S.input} />
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ color: "#8899aa", fontSize: 12, display: "block", marginBottom: 4 }}>제목 (한국어) *</label>
+                    <input value={blogForm.title_ko} onChange={e => setBlogForm(p => ({...p, title_ko: e.target.value}))}
+                      placeholder="유튜브 무료 효과음 다운로드 방법" style={S.input} />
+                  </div>
+                  <div>
+                    <label style={{ color: "#8899aa", fontSize: 12, display: "block", marginBottom: 4 }}>제목 (English)</label>
+                    <input value={blogForm.title_en} onChange={e => setBlogForm(p => ({...p, title_en: e.target.value}))}
+                      placeholder="Free Sound Effects for YouTube" style={S.input} />
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ color: "#8899aa", fontSize: 12, display: "block", marginBottom: 4 }}>요약설명 (한국어) — SEO</label>
+                    <input value={blogForm.description_ko} onChange={e => setBlogForm(p => ({...p, description_ko: e.target.value}))}
+                      placeholder="저작권 없는 CC0 효과음을 무료로 다운로드하세요." style={S.input} />
+                  </div>
+                  <div>
+                    <label style={{ color: "#8899aa", fontSize: 12, display: "block", marginBottom: 4 }}>요약설명 (English)</label>
+                    <input value={blogForm.description_en} onChange={e => setBlogForm(p => ({...p, description_en: e.target.value}))}
+                      placeholder="Download free CC0 sound effects." style={S.input} />
+                  </div>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ color: "#8899aa", fontSize: 12, display: "block", marginBottom: 4 }}>본문 (한국어) * — HTML 가능: h2, p, ul, li, strong</label>
+                  <textarea value={blogForm.content_ko} onChange={e => setBlogForm(p => ({...p, content_ko: e.target.value}))}
+                    placeholder="<h2>무료 효과음이란?</h2>
+<p>CC0 라이선스 효과음은...</p>"
+                    style={{ ...S.input, height: 220, resize: "vertical", fontFamily: "monospace", fontSize: 13 }} />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ color: "#8899aa", fontSize: 12, display: "block", marginBottom: 4 }}>본문 (English) — HTML 가능</label>
+                  <textarea value={blogForm.content_en} onChange={e => setBlogForm(p => ({...p, content_en: e.target.value}))}
+                    placeholder="<h2>What are Free Sound Effects?</h2>
+<p>CC0 licensed sounds...</p>"
+                    style={{ ...S.input, height: 220, resize: "vertical", fontFamily: "monospace", fontSize: 13 }} />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                  <Toggle value={blogForm.published} onChange={v => setBlogForm(p => ({...p, published: v}))} />
+                  <span style={{ fontSize: 14, color: "#8899aa" }}>{blogForm.published ? "공개" : "비공개"}</span>
+                </div>
+                {blogError && <p style={{ color: "#ff6b6b", fontSize: 13, marginBottom: 10 }}>{blogError}</p>}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={handleBlogSubmit} disabled={blogLoading}
+                    style={{ ...S.btn(blogSaved ? "#00b894" : "#00d4aa"), color: "#000", opacity: blogLoading ? 0.6 : 1, transition: "background 0.3s" }}>
+                    {blogLoading ? "저장 중..." : blogSaved ? "✅ 저장 완료!" : editingPost ? "✏️ 수정 저장" : "📝 발행"}
+                  </button>
+                  {editingPost && (
+                    <button onClick={() => { setEditingPost(null); setBlogForm({ slug:"",title_ko:"",title_en:"",content_ko:"",content_en:"",description_ko:"",description_en:"",tags:"",published:true }) }}
+                      style={{ ...S.btn("#1e2830"), fontSize: 14 }}>취소</button>
+                  )}
+                </div>
+                <p style={{ color: "#445566", fontSize: 12, marginTop: 10 }}>
+                  발행된 글: <a href="/blog" target="_blank" style={{ color: "#00d4aa" }}>/blog</a>
+                </p>
+              </div>
+            )}
+            {blogTab === "list" && (
+              <div>
+                {blogLoading && <p style={{ color: "#445566", fontSize: 14 }}>불러오는 중...</p>}
+                {!blogLoading && blogPosts.length === 0 && <p style={{ color: "#445566", fontSize: 14 }}>아직 글이 없어요.</p>}
+                {blogPosts.map(post => (
+                  <div key={post.id} style={{ ...S.row, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{post.title_ko}</div>
+                      <div style={{ color: "#445566", fontSize: 12 }}>/blog/{post.slug} · {new Date(post.created_at).toLocaleDateString("ko-KR")}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                      <a href={`/blog/${post.slug}`} target="_blank" rel="noreferrer"
+                        style={{ ...S.btn("#0d1f2a"), padding: "6px 12px", fontSize: 12, textDecoration: "none", color: "#00d4aa" }}>보기</a>
+                      <button onClick={() => handleBlogEdit(post)}
+                        style={{ ...S.btn("#0d2a1a"), padding: "6px 12px", fontSize: 12 }}>수정</button>
+                      <button onClick={() => handleBlogDelete(post.id)}
+                        style={{ ...S.btn("#2a0d0d"), padding: "6px 12px", fontSize: 12 }}>삭제</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ===== 섹션 6: 비밀번호 변경 ===== */}
           <div style={S.card}>
             <h2 style={S.cardTitle}>🔒 비밀번호 변경</h2>
             <p style={{ color: '#445566', fontSize: 14, marginBottom: 20 }}>
