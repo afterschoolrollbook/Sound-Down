@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { marked } from 'marked'
 
 export default function BlogPost() {
   const router = useRouter()
@@ -69,7 +70,8 @@ export default function BlogPost() {
   )
 
   const title = lang === 'ko' ? post.title_ko : (post.title_en || post.title_ko)
-  const content = lang === 'ko' ? post.content_ko : (post.content_en || post.content_ko)
+  const rawContent = lang === 'ko' ? post.content_ko : (post.content_en || post.content_ko)
+  const content = rawContent ? marked(rawContent) : ''
   const description = lang === 'ko' ? post.description_ko : (post.description_en || post.description_ko)
 
   return (
