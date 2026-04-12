@@ -89,6 +89,15 @@ export default async function handler(req, res) {
 
     const { id } = req.body
 
+    // blog_posts에서 slug 먼저 가져오기
+    const { data: post } = await supabase
+      .from('blog_posts')
+      .select('slug')
+      .eq('id', id)
+      .eq('site', SITE)
+      .single()
+
+    // blog_posts 삭제
     const { error } = await supabase
       .from('blog_posts')
       .delete()
@@ -96,6 +105,16 @@ export default async function handler(req, res) {
       .eq('site', SITE)
 
     if (error) return res.status(500).json({ error: error.message })
+
+    // pipeline_logs에서 같은 slug 삭제
+    if (post?.slug) {
+      await supabase
+        .from('pipeline_logs')
+        .delete()
+        .eq('slug', post.slug)
+        .eq('site', SITE)
+    }
+
     return res.status(200).json({ success: true })
   }
 
