@@ -359,6 +359,9 @@ export default function Home() {
                 🖼️ Thumb-Down
               </a>
             )}
+            <a href="/blog" style={{ color: 'var(--text2)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+              {lang === 'ko' ? '블로그' : 'Blog'}
+            </a>
             <button className="lang-btn" onClick={toggleLang}>
               {lang === 'ko' ? '🇺🇸 English' : '🇰🇷 한국어'}
             </button>
