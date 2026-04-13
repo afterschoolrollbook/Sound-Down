@@ -11,26 +11,32 @@ export default async function handler(req, res) {
   // GET - 글 목록 or 개별 글
   if (req.method === 'GET') {
     const { slug } = req.query
+    const token = req.headers['x-admin-token']
+    const isAdmin = token === process.env.ADMIN_SECRET_TOKEN
 
     if (slug) {
-      const { data, error } = await supabase
+      let query = supabase
         .from('blog_posts')
         .select('*')
         .eq('site', SITE)
         .eq('slug', slug)
-        .eq('published', true)
-        .single()
 
+      if (!isAdmin) query = query.eq('published', true)
+
+      const { data, error } = await query.single()
       if (error || !data) return res.status(404).json({ error: 'Not found' })
       return res.status(200).json(data)
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('blog_posts')
-      .select('id, slug, title_ko, title_en, description_ko, description_en, tags, created_at')
+      .select('id, slug, title_ko, title_en, content_ko, content_en, description_ko, description_en, tags, published, created_at')
       .eq('site', SITE)
-      .eq('published', true)
       .order('created_at', { ascending: false })
+
+    if (!isAdmin) query = query.eq('published', true)
+
+    const { data, error } = await query
 
     if (error) return res.status(500).json({ error: error.message })
     return res.status(200).json(data)
@@ -89,7 +95,6 @@ export default async function handler(req, res) {
 
     const { id } = req.body
 
-    // blog_posts에서 slug 먼저 가져오기
     const { data: post } = await supabase
       .from('blog_posts')
       .select('slug')
@@ -97,7 +102,6 @@ export default async function handler(req, res) {
       .eq('site', SITE)
       .single()
 
-    // blog_posts 삭제
     const { error } = await supabase
       .from('blog_posts')
       .delete()
@@ -106,7 +110,6 @@ export default async function handler(req, res) {
 
     if (error) return res.status(500).json({ error: error.message })
 
-    // pipeline_logs에서 같은 slug 삭제
     if (post?.slug) {
       await supabase
         .from('pipeline_logs')
