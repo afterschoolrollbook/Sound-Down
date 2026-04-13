@@ -432,7 +432,10 @@ export default function Admin() {
               <h1 style={{ fontSize: 22, fontWeight: 800 }}>관리자 대시보드</h1>
               <p style={{ color: '#445566', fontSize: 13, marginTop: 2 }}>Sound-Down Admin Panel · Supabase 연동</p>
             </div>
-            <a href="/" style={{ color: '#445566', fontSize: 13, textDecoration: 'none' }}>← 사이트 보기</a>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <a href="/" style={{ color: '#445566', fontSize: 13, textDecoration: 'none' }}>← 사이트 보기</a>
+              <button onClick={() => { sessionStorage.removeItem('admin_token'); setAuthed(false); setAdminToken('') }} style={{ background: 'none', border: '1px solid #333', color: '#445566', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 13, fontFamily: "'Outfit', sans-serif" }}>로그아웃</button>
+            </div>
           </div>
         </div>
 
