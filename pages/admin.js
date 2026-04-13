@@ -221,11 +221,22 @@ export default function Admin() {
   const fetchBlogPosts = async () => {
     setBlogLoading(true)
     try {
-      const res = await fetch('/api/blog/posts')
+      const res = await fetch('/api/blog/posts', {
+        headers: { 'x-admin-token': adminToken },
+      })
       const data = await res.json()
       setBlogPosts(Array.isArray(data) ? data : [])
     } catch {}
     setBlogLoading(false)
+  }
+
+  const handleTogglePublished = async (post) => {
+    await fetch('/api/blog/posts', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+      body: JSON.stringify({ id: post.id, published: !post.published }),
+    })
+    fetchBlogPosts()
   }
 
   const handleBlogSubmit = async () => {
@@ -661,10 +672,21 @@ export default function Admin() {
                 {blogPosts.map(post => (
                   <div key={post.id} style={{ ...S.row, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{post.title_ko}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>{post.title_ko}</span>
+                        <span style={{
+                          fontSize: 10, padding: "2px 6px", borderRadius: 4, fontWeight: 600,
+                          background: post.published ? '#0a2a1a' : '#2a0a0a',
+                          color: post.published ? '#00d4aa' : '#ff6b6b',
+                        }}>{post.published ? '공개' : '비공개'}</span>
+                      </div>
                       <div style={{ color: "#445566", fontSize: 12 }}>/blog/{post.slug} · {new Date(post.created_at).toLocaleDateString("ko-KR")}</div>
                     </div>
                     <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                      <button onClick={() => handleTogglePublished(post)}
+                        style={{ ...S.btn(post.published ? "#2a1a00" : "#0a2a1a"), padding: "6px 12px", fontSize: 12 }}>
+                        {post.published ? '비공개로' : '공개로'}
+                      </button>
                       <a href={`/blog/${post.slug}`} target="_blank" rel="noreferrer"
                         style={{ ...S.btn("#0d1f2a"), padding: "6px 12px", fontSize: 12, textDecoration: "none", color: "#00d4aa" }}>보기</a>
                       <button onClick={() => handleBlogEdit(post)}
